@@ -16,29 +16,125 @@
 </head>
 
 <body>
+
+<?php
+
+include('config.php');
+$name = $email = $venue = $link = $details = $date = "";
+$nameErr = $venueErr = $linkErr = $detailsErr =  $validationErr = $dateErr = "";
+$validForm = true;
+
+if(isset($_POST['submit'])){
+    if (!isset($_POST['isnotBot']) or isset($_POST['isBot'])){
+        $validationErr = "Humans only please, try again";
+        $validForm = false;
+    }}
+
+if(isset($_POST['submit'])){
+    if (isset($_POST['isnotBot']) and !isset($_POST['isBot'])){
+
+        if (empty($_POST["name"])) {
+            $nameErr = "Name is Required";
+            $validForm = false;
+        }
+        else{
+            $name = test_input($_POST['name']);
+        }
+        if (empty($_POST["date"])) {
+            $dateErr = "Date is required";
+            $validForm = false;
+          } else {
+        $date = test_input($_POST['date']);
+          }
+        if (empty($_POST["venue"])) {
+            $venueErr = "Venue is required";
+            $validForm = false;
+        } else {
+        $venue = test_input($_POST['venue']);
+        }
+        if (empty($_POST["details"])) {
+            $detailsErr = "Details are required";
+            $validForm = false;
+        } else {
+        $details =test_input( $_POST['details']);
+        }
+        if (empty($_POST["link"])) {
+            $linkErr = "link is required";
+            $validForm = false;
+          } else {
+        $link = test_input($_POST['link']);
+        if (!filter_var($link, FILTER_VALIDATE_URL)) {
+            $linkErr = 'enter a valid url';
+            $validForm = false;
+        }
+        }   
+
+        if ($validForm == true){
+            $connection = mysqli_connect('localhost', $user, $pass, $db);
+            if (!$connection){
+                echo('database connection failed');
+            }
+
+            $sql = "INSERT INTO events(name,date,venue,details,link) VALUES ('$name', '$date', '$venue', '$details', '$link')";
+
+            if ($connection->query($sql) === TRUE) {
+                echo "New record created successfully";
+            } else {
+                echo "Error: " . $sql . "<br>" . $connection->error;
+            }
+        
+            $connection->close();
+
+            header('location: index.php');
+        }
+    
+
+
+    }
+}
+
+function test_input($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+  }
+
+?>
+
+
+
+
     <div class="container">
         <header class='header'>
             <h3>Local Scene - Event Calender</h3>
             <button class='new-button' onclick="showEvent('newEventWrapper')" id='newEventButton'>NEW</button>
         </header>
-        <div id='newEventWrapper' class='no-show'>
+        <div id='newEventWrapper' class='<?=$validForm === true ? 'no-show' : 'event-wrapper'?>'>
             <div class='event-container'>
-                <form class='reddy' action='submit.php' method='POST'>
+                <!-- <form class='reddy' action='submit.php' method='POST'> -->
+                <form class='new-form' action='<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>' method='POST'>
                     <div class="new-event-form">
                         <label for=' name'>Band or Artist Name</label>
-                        <input id='name' name='name' type='text' class='name-input' />
+                        <span class="error"><?php echo $nameErr;?></span>
+                        <input id='name' name='name' type='text' class='name-input' value="<?php echo $name;?>" />
                         <label for='date'> Date</label>
-                        <input type='date' id='date' name='date' class='date-input' />
+                        <span class="error"><?php echo $dateErr;?></span>
+                        <input type='date' id='date' name='date' class='date-input' value="<?php echo $date;?>" />
                         <label for='venue'>Venue</label>
-                        <input id='venue' name='venue' class='venue-input' />
+                        <span class="error"><?php echo $venueErr;?></span>
+                        <input id='venue' name='venue' class='venue-input' value="<?php echo $venue;?>" />
                         <label for='details'> More Info </label>
-                        <textarea id='details' name='details' class='date-input' rows='3'></textarea>
+                        <span class="error"><?php echo $detailsErr;?></span>
+                        <textarea id='details' name='details' class='date-input' rows='3'><?php echo $details;?></textarea>
                         <label for='link'> Copy and Paste an event link </label>
-                        <input id='link' name='link' class='link-input'/>
+                        <span class="error"><?php echo $linkErr;?></span>
+                        <input id='link' name='link' class='link-input' value="<?php echo $link;?>"/>
                         <label for='isBot'>I am a robot</label>
                         <input type='checkbox' id='isBot' name="isBot"/>
                         <label for='isnotBot'>I am a sentient being</label>
                         <input type='checkbox' id='isnotBot' name='isnotBot'/>
+                        <span class="error"><?php echo $validationErr;?></span>
                         <input type='submit' name='submit' value='Submit' />
                     </div>
                 </form>
